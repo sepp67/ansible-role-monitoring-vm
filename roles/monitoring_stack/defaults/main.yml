@@ -1,0 +1,48 @@
+---
+monitoring_stack_install_dir: /opt/monitoring
+monitoring_stack_project_name: monitoring
+
+monitoring_compose_file: "{{ monitoring_stack_install_dir }}/compose.yml"
+
+monitoring_prometheus_port: 9090
+monitoring_grafana_port: 3000
+monitoring_loki_port: 3100
+monitoring_alertmanager_port: 9093
+monitoring_blackbox_port: 9115
+
+monitoring_prometheus_retention_time: 30d
+monitoring_prometheus_retention_size: 10GB
+
+monitoring_grafana_admin_user: admin
+monitoring_grafana_admin_password: ""
+
+monitoring_prometheus_file_sd_root: /etc/prometheus/file_sd
+monitoring_prometheus_node_targets_dir: "{{ monitoring_prometheus_file_sd_root }}/node_targets"
+monitoring_prometheus_blackbox_targets_dir: "{{ monitoring_prometheus_file_sd_root }}/blackbox_targets"
+
+monitoring_alertmanager_receivers: []
+
+monitoring_blackbox_modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      preferred_ip_protocol: ip4
+
+monitoring_extra_scrape_configs: []
+
+monitoring_required_directories:
+  - "{{ monitoring_stack_install_dir }}"
+  - "{{ monitoring_stack_install_dir }}/prometheus"
+  - "{{ monitoring_stack_install_dir }}/alertmanager"
+  - "{{ monitoring_stack_install_dir }}/blackbox"
+  - "{{ monitoring_stack_install_dir }}/loki"
+  - "{{ monitoring_stack_install_dir }}/grafana"
+  - "{{ monitoring_stack_install_dir }}/grafana/provisioning"
+  - "{{ monitoring_stack_install_dir }}/grafana/provisioning/datasources"
+  - "{{ monitoring_stack_install_dir }}/grafana/provisioning/dashboards"
+  - "{{ monitoring_stack_install_dir }}/grafana/dashboards"
+  - "{{ monitoring_prometheus_file_sd_root }}"
+  - "{{ monitoring_prometheus_node_targets_dir }}"
+  - "{{ monitoring_prometheus_blackbox_targets_dir }}"

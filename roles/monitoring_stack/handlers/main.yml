@@ -1,0 +1,6 @@
+---
+- name: Restart monitoring stack
+  ansible.builtin.command:
+    cmd: docker compose -f "{{ monitoring_compose_file }}" up -d
+  args:
+    chdir: "{{ monitoring_stack_install_dir }}"

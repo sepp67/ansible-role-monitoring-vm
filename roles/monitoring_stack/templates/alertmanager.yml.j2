@@ -1,0 +1,23 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 4h
+
+receivers:
+  - name: default
+
+{% for receiver in monitoring_alertmanager_receivers %}
+  - name: {{ receiver.name }}
+{% if receiver.webhook_configs is defined %}
+    webhook_configs:
+{{ receiver.webhook_configs | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% if receiver.email_configs is defined %}
+    email_configs:
+{{ receiver.email_configs | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% endfor %}

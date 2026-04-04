@@ -1,0 +1,130 @@
+---
+- name: Fail if Grafana admin password is not defined
+  ansible.builtin.assert:
+    that:
+      - monitoring_grafana_admin_password is string
+      - monitoring_grafana_admin_password | length > 0
+    fail_msg: "monitoring_grafana_admin_password must be defined, preferably via Ansible Vault."
+
+- name: Ensure required packages are installed
+  ansible.builtin.package:
+    name:
+      - docker.io
+      - docker-compose-plugin
+    state: present
+
+- name: Ensure Docker service is enabled and started
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Ensure monitoring directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ monitoring_required_directories }}"
+
+- name: Deploy Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/prometheus/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Prometheus alert rules
+  ansible.builtin.template:
+    src: alerts.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/prometheus/alerts.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Alertmanager config
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/alertmanager/alertmanager.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Blackbox config
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/blackbox/blackbox.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Loki config
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/loki/loki-config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Grafana env file
+  ansible.builtin.template:
+    src: grafana.env.j2
+    dest: "{{ monitoring_stack_install_dir }}/grafana/grafana.env"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart monitoring stack
+
+- name: Deploy Grafana datasources provisioning
+  ansible.builtin.copy:
+    src: grafana/provisioning/datasources/datasources.yml
+    dest: "{{ monitoring_stack_install_dir }}/grafana/provisioning/datasources/datasources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Grafana dashboards provisioning
+  ansible.builtin.copy:
+    src: grafana/provisioning/dashboards/dashboards.yml
+    dest: "{{ monitoring_stack_install_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Grafana node overview dashboard
+  ansible.builtin.copy:
+    src: grafana/provisioning/dashboards/node-overview.json
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/node-overview.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Deploy Docker Compose file
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ monitoring_compose_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Start monitoring stack
+  ansible.builtin.command:
+    cmd: docker compose -f "{{ monitoring_compose_file }}" up -d
+  args:
+    chdir: "{{ monitoring_stack_install_dir }}"
+  register: monitoring_stack_up
+  changed_when: >
+    'Creating' in monitoring_stack_up.stdout or
+    'Recreating' in monitoring_stack_up.stdout or
+    'Starting' in monitoring_stack_up.stdout

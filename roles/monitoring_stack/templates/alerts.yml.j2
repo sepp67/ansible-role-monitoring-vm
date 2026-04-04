@@ -1,0 +1,67 @@
+groups:
+  - name: infrastructure.rules
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance down: {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Prometheus cannot scrape target {{ "{{" }} $labels.instance {{ "}}" }} for more than 2 minutes."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "CPU usage is above 85% for more than 10 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Memory usage is above 90% for more than 10 minutes."
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 15
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Available disk space is below 15% on mountpoint {{ "{{" }} $labels.mountpoint {{ "}}" }}."
+
+      - alert: HostHighLoad
+        expr: node_load1 > count by(instance) (node_cpu_seconds_total{mode="idle"})
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "1-minute load average is higher than CPU core count."
+
+  - name: blackbox.rules
+    rules:
+      - alert: BlackboxProbeFailed
+        expr: probe_success == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Endpoint probe failed: {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Blackbox probe has been failing for more than 3 minutes."
+
+      - alert: BlackboxSlowResponse
+        expr: probe_duration_seconds > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow endpoint response: {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Probe duration is above 2 seconds for more than 10 minutes."

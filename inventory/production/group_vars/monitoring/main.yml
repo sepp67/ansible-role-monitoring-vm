@@ -1,0 +1,28 @@
+---
+monitoring_stack_install_dir: /opt/monitoring
+monitoring_stack_project_name: monitoring
+
+monitoring_prometheus_port: 9090
+monitoring_grafana_port: 3000
+monitoring_loki_port: 3100
+monitoring_alertmanager_port: 9093
+monitoring_blackbox_port: 9115
+
+monitoring_prometheus_retention_time: 30d
+monitoring_prometheus_retention_size: 10GB
+
+monitoring_grafana_admin_user: admin
+monitoring_grafana_admin_password: "{{ vault_monitoring_grafana_admin_password }}"
+
+monitoring_alertmanager_receivers: "{{ vault_monitoring_alertmanager_receivers }}"
+
+monitoring_blackbox_modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      method: GET
+      preferred_ip_protocol: ip4
+
+monitoring_extra_scrape_configs: []

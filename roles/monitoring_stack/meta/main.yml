@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: sepp67
+  description: Deploy a monitoring VM with Prometheus, Grafana, Loki, Alertmanager and Blackbox Exporter
+  license: GPL-3.0-only
+  min_ansible_version: "2.16"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - bullseye
+        - all
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+        - all
+
+dependencies: []
