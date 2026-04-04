@@ -10,7 +10,7 @@
   ansible.builtin.package:
     name:
       - docker.io
-      - docker-compose-plugin
+      - docker-compose
     state: present
 
 - name: Ensure Docker service is enabled and started
@@ -120,7 +120,7 @@
 
 - name: Start monitoring stack
   ansible.builtin.command:
-    cmd: docker compose -f "{{ monitoring_compose_file }}" up -d
+    cmd: docker-compose -f "{{ monitoring_compose_file }}" up -d
   args:
     chdir: "{{ monitoring_stack_install_dir }}"
   register: monitoring_stack_up
