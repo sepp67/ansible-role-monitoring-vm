@@ -109,6 +109,15 @@
     mode: "0644"
   notify: Restart monitoring stack
 
+- name: Deploy Grafana Caddy access logs dashboard
+  ansible.builtin.copy:
+    src: grafana/provisioning/dashboards/caddy-access-logs-loki.json
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/caddy-access-logs-loki.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack  
+
 - name: Deploy Docker Compose file
   ansible.builtin.template:
     src: compose.yml.j2
