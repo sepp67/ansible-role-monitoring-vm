@@ -75,6 +75,7 @@ services:
     container_name: pve-exporter
     restart: unless-stopped
     command:
+      - --config.file
       - /etc/prometheus/pve.yml
     ports:
       - "127.0.0.1:{{ monitoring_pve_exporter_port }}:9221"
