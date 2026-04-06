@@ -133,7 +133,7 @@
     dest: "{{ monitoring_stack_install_dir }}/pve-exporter/pve.yml"
     owner: root
     group: root
-    mode: "0600"
+    mode: "0644"
   when: monitoring_pve_exporter_enabled | bool
   notify: Restart monitoring stack
 
