@@ -35,9 +35,28 @@ scrape_configs:
           - /etc/prometheus/file_sd/node_targets/*.yml
         refresh_interval: 30s
 
-{% if monitoring_extra_scrape_configs | length > 0 %}
-{{ monitoring_extra_scrape_configs | to_nice_yaml(indent=2) }}
+{% for scrape_job in monitoring_extra_scrape_configs | default([]) %}
+  - job_name: {{ scrape_job.job_name }}
+{% if scrape_job.metrics_path is defined %}
+    metrics_path: {{ scrape_job.metrics_path }}
 {% endif %}
+{% if scrape_job.params is defined %}
+    params:
+{{ scrape_job.params | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% if scrape_job.static_configs is defined %}
+    static_configs:
+{{ scrape_job.static_configs | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% if scrape_job.file_sd_configs is defined %}
+    file_sd_configs:
+{{ scrape_job.file_sd_configs | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% if scrape_job.relabel_configs is defined %}
+    relabel_configs:
+{{ scrape_job.relabel_configs | to_nice_yaml(indent=6) | indent(6, true) }}
+{% endif %}
+{% endfor %}
 
 alerting:
   alertmanagers:
