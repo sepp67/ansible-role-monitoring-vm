@@ -70,6 +70,17 @@ services:
     volumes:
       - {{ monitoring_stack_install_dir }}/blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
 
+  pve-exporter:
+    image: {{ monitoring_pve_exporter_image }}
+    container_name: pve-exporter
+    restart: unless-stopped
+    command:
+      - /etc/prometheus/pve.yml
+    ports:
+      - "127.0.0.1:{{ monitoring_pve_exporter_port }}:9221"
+    volumes:
+      - {{ monitoring_stack_install_dir }}/pve-exporter/pve.yml:/etc/prometheus/pve.yml:ro  
+  
 volumes:
   prometheus-data:
   grafana-data:

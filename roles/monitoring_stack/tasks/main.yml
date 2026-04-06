@@ -127,6 +127,25 @@
     mode: "0644"
   notify: Restart monitoring stack
 
+- name: Deploy Proxmox exporter config
+  ansible.builtin.template:
+    src: pve.yml.j2
+    dest: "{{ monitoring_stack_install_dir }}/pve-exporter/pve.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  when: monitoring_pve_exporter_enabled | bool
+  notify: Restart monitoring stack
+
+- name: Deploy Grafana Proxmox dashboard
+  ansible.builtin.copy:
+    src: grafana/provisioning/dashboards/proxmox-overview.json
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/proxmox-overview.json"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack    
+
 - name: Deploy Docker Compose file
   ansible.builtin.template:
     src: compose.yml.j2

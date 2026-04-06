@@ -1,7 +1,6 @@
 ---
 monitoring_stack_install_dir: /opt/monitoring
 monitoring_stack_project_name: monitoring
-
 monitoring_compose_file: "{{ monitoring_stack_install_dir }}/compose.yml"
 
 monitoring_prometheus_port: 9090
@@ -32,6 +31,24 @@ monitoring_blackbox_modules:
 
 monitoring_extra_scrape_configs: []
 
+monitoring_pve_exporter_enabled: false
+monitoring_pve_exporter_image: "prompve/prometheus-pve-exporter:v3.8.2"
+monitoring_pve_exporter_port: 9221
+
+monitoring_proxmox_targets: []
+# Exemple :
+# monitoring_proxmox_targets:
+#   - "192.168.1.10"
+#   - "192.168.1.11"
+
+monitoring_proxmox_cluster_enabled: true
+monitoring_proxmox_node_enabled: true
+
+monitoring_proxmox_api_user: ""
+monitoring_proxmox_api_token_name: ""
+monitoring_proxmox_api_token_value: ""
+monitoring_proxmox_verify_ssl: false
+
 monitoring_required_directories:
   - "{{ monitoring_stack_install_dir }}"
   - "{{ monitoring_stack_install_dir }}/prometheus"
@@ -43,6 +60,7 @@ monitoring_required_directories:
   - "{{ monitoring_stack_install_dir }}/grafana/provisioning/datasources"
   - "{{ monitoring_stack_install_dir }}/grafana/provisioning/dashboards"
   - "{{ monitoring_stack_install_dir }}/grafana/dashboards"
+  - "{{ monitoring_stack_install_dir }}/pve-exporter"
   - "{{ monitoring_prometheus_file_sd_root }}"
   - "{{ monitoring_prometheus_node_targets_dir }}"
   - "{{ monitoring_prometheus_blackbox_targets_dir }}"

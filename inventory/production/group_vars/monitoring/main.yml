@@ -24,4 +24,32 @@ monitoring_blackbox_modules:
       method: GET
       preferred_ip_protocol: ip4
 
-monitoring_extra_scrape_configs: []
+monitoring_pve_exporter_enabled: true
+
+monitoring_proxmox_targets:
+  - "192.168.1.67"
+
+monitoring_proxmox_cluster_enabled: false
+monitoring_proxmox_node_enabled: true
+
+monitoring_proxmox_api_user: "monitoring@pve"
+monitoring_proxmox_api_token_name: "prometheus"
+monitoring_proxmox_api_token_value: "{{ vault_monitoring_proxmox_api_token_value }}"
+monitoring_proxmox_verify_ssl: false
+
+monitoring_extra_scrape_configs:
+  - job_name: proxmox
+    metrics_path: /pve
+    params:
+      module: [default]
+      cluster: ["0"]
+      node: ["1"]
+    static_configs:
+      - targets: ["192.168.1.67"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: "pve-exporter:9221"
