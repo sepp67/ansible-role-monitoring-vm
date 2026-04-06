@@ -35,11 +35,9 @@ monitoring_pve_exporter_enabled: false
 monitoring_pve_exporter_image: "prompve/prometheus-pve-exporter:3"
 monitoring_pve_exporter_port: 9221
 
-monitoring_proxmox_targets: []
-# Exemple :
-# monitoring_proxmox_targets:
-#   - "192.168.1.10"
-#   - "192.168.1.11"
+monitoring_proxmox_targets: 
+  - "192.168.1.67"
+
 
 monitoring_proxmox_cluster_enabled: true
 monitoring_proxmox_node_enabled: true
