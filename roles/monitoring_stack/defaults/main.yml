@@ -32,7 +32,7 @@ monitoring_blackbox_modules:
 monitoring_extra_scrape_configs: []
 
 monitoring_pve_exporter_enabled: false
-monitoring_pve_exporter_image: "prompve/prometheus-pve-exporter:v3.8.2"
+monitoring_pve_exporter_image: "prompve/prometheus-pve-exporter:3"
 monitoring_pve_exporter_port: 9221
 
 monitoring_proxmox_targets: []
