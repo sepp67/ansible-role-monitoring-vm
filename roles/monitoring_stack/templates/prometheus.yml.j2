@@ -35,7 +35,29 @@ scrape_configs:
           - /etc/prometheus/file_sd/node_targets/*.yml
         refresh_interval: 30s
 
-{% for scrape_job in monitoring_extra_scrape_configs | default([]) %}
+{% if monitoring_pve_exporter_enabled | bool %}
+  - job_name: proxmox
+    metrics_path: /pve
+    params:
+      module: [default]
+      cluster: ["{{ '1' if monitoring_proxmox_cluster_enabled else '0' }}"]
+      node: ["{{ '1' if monitoring_proxmox_node_enabled else '0' }}"]
+    static_configs:
+      - targets:
+{% for target in monitoring_proxmox_targets %}
+          - "{{ target }}"
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: "pve-exporter:9221"
+{% endif %}
+
+{% if monitoring_extra_scrape_configs | default([]) | length > 0 %}
+{% for scrape_job in monitoring_extra_scrape_configs %}
   - job_name: {{ scrape_job.job_name }}
 {% if scrape_job.metrics_path is defined %}
     metrics_path: {{ scrape_job.metrics_path }}
@@ -57,6 +79,7 @@ scrape_configs:
 {{ scrape_job.relabel_configs | to_nice_yaml(indent=6) | indent(6, true) }}
 {% endif %}
 {% endfor %}
+{% endif %}
 
 alerting:
   alertmanagers:

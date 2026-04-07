@@ -17,9 +17,10 @@ services:
       - {{ monitoring_stack_install_dir }}/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - {{ monitoring_prometheus_file_sd_root }}:/etc/prometheus/file_sd
       - prometheus-data:/prometheus
+{% if monitoring_pve_exporter_enabled | bool %}
     depends_on:
-      - blackbox
-      - alertmanager
+      - pve-exporter
+{% endif %}
 
   grafana:
     image: grafana/grafana:latest
@@ -41,7 +42,8 @@ services:
     image: grafana/loki:latest
     container_name: loki
     restart: unless-stopped
-    command: -config.file=/etc/loki/local-config.yaml
+    command:
+      - -config.file=/etc/loki/local-config.yaml
     ports:
       - "{{ monitoring_loki_port }}:3100"
     volumes:
@@ -70,6 +72,7 @@ services:
     volumes:
       - {{ monitoring_stack_install_dir }}/blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
 
+{% if monitoring_pve_exporter_enabled | bool %}
   pve-exporter:
     image: {{ monitoring_pve_exporter_image }}
     container_name: pve-exporter
@@ -80,8 +83,9 @@ services:
     ports:
       - "127.0.0.1:{{ monitoring_pve_exporter_port }}:9221"
     volumes:
-      - {{ monitoring_stack_install_dir }}/pve-exporter/pve.yml:/etc/prometheus/pve.yml:ro  
-  
+      - {{ monitoring_stack_install_dir }}/pve-exporter/pve.yml:/etc/prometheus/pve.yml:ro
+{% endif %}
+
 volumes:
   prometheus-data:
   grafana-data:

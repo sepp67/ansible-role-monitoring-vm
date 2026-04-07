@@ -1,0 +1,109 @@
+---
+- name: Check Prometheus config file exists
+  ansible.builtin.stat:
+    path: "{{ monitoring_stack_install_dir }}/prometheus/prometheus.yml"
+  register: monitoring_validate_prometheus_cfg
+
+- name: Fail if Prometheus config file is missing
+  ansible.builtin.fail:
+    msg: "Prometheus config file is missing: {{ monitoring_stack_install_dir }}/prometheus/prometheus.yml"
+  when: not monitoring_validate_prometheus_cfg.stat.exists
+
+- name: Check Docker Compose file exists
+  ansible.builtin.stat:
+    path: "{{ monitoring_compose_file }}"
+  register: monitoring_validate_compose_cfg
+
+- name: Fail if Docker Compose file is missing
+  ansible.builtin.fail:
+    msg: "Docker Compose file is missing: {{ monitoring_compose_file }}"
+  when: not monitoring_validate_compose_cfg.stat.exists
+
+- name: Check Prometheus container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' prometheus
+  register: monitoring_validate_prometheus_container
+  changed_when: false
+  failed_when: monitoring_validate_prometheus_container.rc != 0 or monitoring_validate_prometheus_container.stdout | trim != "true"
+
+- name: Check Grafana container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' grafana
+  register: monitoring_validate_grafana_container
+  changed_when: false
+  failed_when: monitoring_validate_grafana_container.rc != 0 or monitoring_validate_grafana_container.stdout | trim != "true"
+
+- name: Check Loki container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' loki
+  register: monitoring_validate_loki_container
+  changed_when: false
+  failed_when: monitoring_validate_loki_container.rc != 0 or monitoring_validate_loki_container.stdout | trim != "true"
+
+- name: Check Alertmanager container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' alertmanager
+  register: monitoring_validate_alertmanager_container
+  changed_when: false
+  failed_when: monitoring_validate_alertmanager_container.rc != 0 or monitoring_validate_alertmanager_container.stdout | trim != "true"
+
+- name: Check Blackbox container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' blackbox
+  register: monitoring_validate_blackbox_container
+  changed_when: false
+  failed_when: monitoring_validate_blackbox_container.rc != 0 or monitoring_validate_blackbox_container.stdout | trim != "true"
+
+- name: Check Proxmox exporter config file exists
+  ansible.builtin.stat:
+    path: "{{ monitoring_stack_install_dir }}/pve-exporter/pve.yml"
+  register: monitoring_validate_pve_cfg
+  when: monitoring_pve_exporter_enabled | bool
+
+- name: Fail if Proxmox exporter config file is missing
+  ansible.builtin.fail:
+    msg: "Proxmox exporter config file is missing: {{ monitoring_stack_install_dir }}/pve-exporter/pve.yml"
+  when:
+    - monitoring_pve_exporter_enabled | bool
+    - not monitoring_validate_pve_cfg.stat.exists
+
+- name: Check Proxmox exporter container is running
+  ansible.builtin.command:
+    cmd: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' pve-exporter
+  register: monitoring_validate_pve_container
+  changed_when: false
+  failed_when: monitoring_validate_pve_container.rc != 0 or monitoring_validate_pve_container.stdout | trim != "true"
+  when: monitoring_pve_exporter_enabled | bool
+
+- name: Check Prometheus HTTP endpoint responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_prometheus_port }}/-/healthy"
+    method: GET
+    status_code: 200
+  register: monitoring_validate_prometheus_http
+
+- name: Check Prometheus targets API responds
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_prometheus_port }}/api/v1/targets"
+    method: GET
+    status_code: 200
+  register: monitoring_validate_prometheus_targets
+
+- name: Check Proxmox exporter endpoint responds locally
+  ansible.builtin.uri:
+    url: >-
+      http://127.0.0.1:{{ monitoring_pve_exporter_port }}/pve?target={{ monitoring_proxmox_targets[0] }}&module=default&cluster={{ '1' if monitoring_proxmox_cluster_enabled else '0' }}&node={{ '1' if monitoring_proxmox_node_enabled else '0' }}
+    method: GET
+    status_code: 200
+  register: monitoring_validate_pve_http
+  when:
+    - monitoring_pve_exporter_enabled | bool
+    - monitoring_proxmox_targets | length > 0
+
+- name: Check Prometheus has proxmox job configured
+  ansible.builtin.command:
+    cmd: grep -q 'job_name: proxmox' {{ monitoring_stack_install_dir }}/prometheus/prometheus.yml
+  register: monitoring_validate_proxmox_job
+  changed_when: false
+  failed_when: monitoring_validate_proxmox_job.rc != 0
+  when: monitoring_pve_exporter_enabled | bool

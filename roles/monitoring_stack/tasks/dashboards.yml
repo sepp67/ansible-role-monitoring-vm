@@ -1,0 +1,32 @@
+---
+- name: Copy core Grafana dashboards
+  ansible.builtin.copy:
+    src: grafana/dashboards/core/
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/core/"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+  when: monitoring_grafana_dashboards_core_enabled | bool
+
+- name: Copy logs Grafana dashboards
+  ansible.builtin.copy:
+    src: grafana/dashboards/logs/
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/logs/"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+  when: monitoring_grafana_dashboards_logs_enabled | bool
+
+- name: Copy Proxmox Grafana dashboards
+  ansible.builtin.copy:
+    src: grafana/dashboards/proxmox/
+    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/proxmox/"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart monitoring stack
+  when:
+    - monitoring_grafana_dashboards_proxmox_enabled | bool
+    - monitoring_pve_exporter_enabled | bool

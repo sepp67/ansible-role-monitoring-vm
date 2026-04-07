@@ -1,24 +1,4 @@
 ---
-- name: Fail if Grafana admin password is not defined
-  ansible.builtin.assert:
-    that:
-      - monitoring_grafana_admin_password is string
-      - monitoring_grafana_admin_password | length > 0
-    fail_msg: "monitoring_grafana_admin_password must be defined, preferably via Ansible Vault."
-
-- name: Ensure required packages are installed
-  ansible.builtin.package:
-    name:
-      - docker.io
-      - docker-compose
-    state: present
-
-- name: Ensure Docker service is enabled and started
-  ansible.builtin.service:
-    name: docker
-    enabled: true
-    state: started
-
 - name: Ensure monitoring directories exist
   ansible.builtin.file:
     path: "{{ item }}"
@@ -37,7 +17,7 @@
     mode: "0644"
   notify: Restart monitoring stack
 
-- name: Deploy Prometheus alert rules
+- name: Deploy Prometheus alerts config
   ansible.builtin.template:
     src: alerts.yml.j2
     dest: "{{ monitoring_stack_install_dir }}/prometheus/alerts.yml"
@@ -73,7 +53,7 @@
     mode: "0644"
   notify: Restart monitoring stack
 
-- name: Deploy Grafana env file
+- name: Deploy Grafana environment file
   ansible.builtin.template:
     src: grafana.env.j2
     dest: "{{ monitoring_stack_install_dir }}/grafana/grafana.env"
@@ -83,8 +63,8 @@
   notify: Restart monitoring stack
 
 - name: Deploy Grafana datasources provisioning
-  ansible.builtin.copy:
-    src: grafana/provisioning/datasources/datasources.yml
+  ansible.builtin.template:
+    src: grafana/provisioning/datasources/datasources.yml.j2
     dest: "{{ monitoring_stack_install_dir }}/grafana/provisioning/datasources/datasources.yml"
     owner: root
     group: root
@@ -92,59 +72,20 @@
   notify: Restart monitoring stack
 
 - name: Deploy Grafana dashboards provisioning
-  ansible.builtin.copy:
-    src: grafana/provisioning/dashboards/dashboards.yml
+  ansible.builtin.template:
+    src: grafana/provisioning/dashboards/dashboards.yml.j2
     dest: "{{ monitoring_stack_install_dir }}/grafana/provisioning/dashboards/dashboards.yml"
     owner: root
     group: root
     mode: "0644"
   notify: Restart monitoring stack
 
-- name: Deploy Grafana node overview dashboard
-  ansible.builtin.copy:
-    src: grafana/provisioning/dashboards/node-overview.json
-    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/node-overview.json"
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Restart monitoring stack
-
-- name: Deploy Grafana Caddy access logs dashboard
-  ansible.builtin.copy:
-    src: grafana/provisioning/dashboards/caddy-access-logs-loki.json
-    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/caddy-access-logs-loki.json"
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Restart monitoring stack  
-
-- name: Deploy Grafana Caddy public access dashboard
-  ansible.builtin.copy:
-    src: grafana/provisioning/dashboards/caddy-public-access-loki.json
-    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/caddy-public-access-loki.json"
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Restart monitoring stack
-
-- name: Deploy Proxmox exporter config
-  ansible.builtin.template:
-    src: pve.yml.j2
-    dest: "{{ monitoring_stack_install_dir }}/pve-exporter/pve.yml"
-    owner: root
-    group: root
-    mode: "0644"
+- name: Include Proxmox exporter tasks
+  ansible.builtin.import_tasks: pve_exporter.yml
   when: monitoring_pve_exporter_enabled | bool
-  notify: Restart monitoring stack
 
-- name: Deploy Grafana Proxmox dashboard
-  ansible.builtin.copy:
-    src: grafana/provisioning/dashboards/proxmox-overview.json
-    dest: "{{ monitoring_stack_install_dir }}/grafana/dashboards/proxmox-overview.json"
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Restart monitoring stack    
+- name: Include Grafana dashboards tasks
+  ansible.builtin.import_tasks: dashboards.yml
 
 - name: Deploy Docker Compose file
   ansible.builtin.template:
@@ -157,11 +98,5 @@
 
 - name: Start monitoring stack
   ansible.builtin.command:
-    cmd: docker-compose -f "{{ monitoring_compose_file }}" up -d
-  args:
-    chdir: "{{ monitoring_stack_install_dir }}"
-  register: monitoring_stack_up
-  changed_when: >
-    'Creating' in monitoring_stack_up.stdout or
-    'Recreating' in monitoring_stack_up.stdout or
-    'Starting' in monitoring_stack_up.stdout
+    cmd: docker-compose -f {{ monitoring_compose_file }} up -d --force-recreate
+  changed_when: false

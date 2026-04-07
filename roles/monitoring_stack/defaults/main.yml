@@ -35,17 +35,22 @@ monitoring_pve_exporter_enabled: false
 monitoring_pve_exporter_image: "prompve/prometheus-pve-exporter:3"
 monitoring_pve_exporter_port: 9221
 
-monitoring_proxmox_targets: 
-  - "192.168.1.67"
+monitoring_proxmox_targets: []
+# Exemple:
+# monitoring_proxmox_targets:
+#   - "192.168.1.67"
 
-
-monitoring_proxmox_cluster_enabled: true
+monitoring_proxmox_cluster_enabled: false
 monitoring_proxmox_node_enabled: true
 
 monitoring_proxmox_api_user: ""
 monitoring_proxmox_api_token_name: ""
 monitoring_proxmox_api_token_value: ""
 monitoring_proxmox_verify_ssl: false
+
+monitoring_grafana_dashboards_core_enabled: true
+monitoring_grafana_dashboards_logs_enabled: true
+monitoring_grafana_dashboards_proxmox_enabled: true
 
 monitoring_required_directories:
   - "{{ monitoring_stack_install_dir }}"
@@ -58,6 +63,9 @@ monitoring_required_directories:
   - "{{ monitoring_stack_install_dir }}/grafana/provisioning/datasources"
   - "{{ monitoring_stack_install_dir }}/grafana/provisioning/dashboards"
   - "{{ monitoring_stack_install_dir }}/grafana/dashboards"
+  - "{{ monitoring_stack_install_dir }}/grafana/dashboards/core"
+  - "{{ monitoring_stack_install_dir }}/grafana/dashboards/logs"
+  - "{{ monitoring_stack_install_dir }}/grafana/dashboards/proxmox"
   - "{{ monitoring_stack_install_dir }}/pve-exporter"
   - "{{ monitoring_prometheus_file_sd_root }}"
   - "{{ monitoring_prometheus_node_targets_dir }}"
